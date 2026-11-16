@@ -96,6 +96,44 @@ gripper = OneroGripper(bus=bus, model="A1L")
 
 一个 `Arm` 只拥有一个 CAN transport。机械臂和夹爪共享该 transport 及 I/O 锁，避免重复打开 SLCAN 串口或并发读取错配反馈帧。不要同时让 `slcand` 和直接 Python SLCAN 打开同一个串口设备。
 
+## 选配触觉传感器
+
+触觉模块是 `OneroGripper` 的选配能力，默认关闭，因此已有程序不会发送额外 CAN 帧：
+
+```python
+gripper = OneroGripper(model="A1R")
+assert gripper.tactile is None
+```
+
+安装触觉模块时显式启用：
+
+```python
+gripper = OneroGripper(
+    bus=bus,
+    model="A1R",
+    with_tactile=True,
+)
+
+# 查询两个选配传感器的实际在线状态，不要求电机已使能。
+status = gripper.tactile.get_online_status()
+print(status.sensor_1_online, status.sensor_2_online)
+
+# 对两个接口执行重标定。
+result = gripper.tactile.recalibrate()
+print(result.sensor_1_success, result.sensor_2_success)
+
+# 读取传感器 1 的合力点（点 0）。
+point = gripper.tactile.read_resultant(sensor_id=1)
+print(point.fx_raw, point.fy_raw, point.fz_raw)
+
+# 从点 0 开始读取 3 个连续测点。
+sample = gripper.tactile.read_points(sensor_id=1, start=0, count=3)
+```
+
+`with_tactile=True` 表示已配置选配模块，不代表传感器当前在线；应通过 `get_online_status()` 检查实际状态。触觉对象复用夹爪的 transport、CAN ID 和 I/O 锁，不单独打开或关闭总线。
+
+协议目前只明确 `Fz = raw × 0.1 N`，因此 `TactilePoint` 始终保留 `fx_raw`、`fy_raw`、`fz_raw`；在 `Fx/Fy` 的符号、比例和单位完成硬件验证前，`fx` 和 `fy` 返回 `None`。
+
 ## Debug UI
 
 实体 Woan/Onero 夹爪示例：

@@ -154,3 +154,81 @@ def test_arm_binds_gripper_to_its_single_owned_transport():
     finally:
         arm.close()
     assert bus.closed is True
+
+
+def test_onero_tactile_is_opt_in_and_does_not_change_legacy_default():
+    legacy = OneroGripper(model="A1R")
+    configured = OneroGripper(model="A1R", with_tactile=True)
+
+    assert legacy.tactile is None
+    assert configured.tactile is not None
+
+
+def test_onero_tactile_queries_online_ports_without_enabling_motor():
+    bus = FakeBus([
+        CanFrame(0x18, bytes.fromhex("0800d803"), 4),
+    ])
+    gripper = OneroGripper(bus=bus, model="A1R", with_tactile=True)
+
+    status = gripper.tactile.get_online_status()
+
+    assert bus.sent == [(0x7FF, bytes.fromhex("0800d8"))]
+    assert status.sensor_1_online is True
+    assert status.sensor_2_online is True
+    assert status.raw_mask == 0x03
+    assert status.timestamp > 0.0
+
+
+def test_onero_tactile_recalibration_reports_each_optional_sensor():
+    bus = FakeBus([
+        CanFrame(0x18, bytes.fromhex("0800db01ff"), 5),
+    ])
+    gripper = OneroGripper(bus=bus, model="A1R", with_tactile=True)
+
+    result = gripper.tactile.recalibrate()
+
+    assert bus.sent == [(0x7FF, bytes.fromhex("0800db"))]
+    assert result.sensor_1 == 0x01
+    assert result.sensor_2 == 0xFF
+    assert result.sensor_1_success is True
+    assert result.sensor_2_success is False
+
+
+def test_onero_tactile_reads_multiple_points_and_preserves_raw_values():
+    bus = FakeBus([
+        CanFrame(0x418, bytes([1, 0, 10, 11, 12, 20, 21, 22]), 8),
+        CanFrame(0x418, bytes([1, 2, 30, 31, 32]), 5),
+    ])
+    gripper = OneroGripper(bus=bus, model="A1R", with_tactile=True)
+
+    sample = gripper.tactile.read_points(sensor_id=1, start=0, count=3)
+
+    assert bus.sent == [(0x08, bytes([1, 0, 3]))]
+    assert [point.point_id for point in sample.points] == [0, 1, 2]
+    assert sample.points[0].fx_raw == 10
+    assert sample.points[0].fy_raw == 11
+    assert sample.points[0].fz_raw == 12
+    assert abs(sample.points[0].fz - 1.2) < 1e-12
+    assert sample.points[0].fx is None
+    assert sample.points[0].fy is None
+    assert sample.points[1].fz_raw == 22
+    assert sample.points[2].fz_raw == 32
+    assert sample.timestamp > 0.0
+
+
+def test_onero_tactile_validates_sensor_and_point_ranges_before_sending():
+    bus = FakeBus()
+    gripper = OneroGripper(bus=bus, model="A1R", with_tactile=True)
+
+    for kwargs in (
+        {"sensor_id": 0, "start": 0, "count": 1},
+        {"sensor_id": 1, "start": 10, "count": 1},
+        {"sensor_id": 1, "start": 9, "count": 2},
+    ):
+        try:
+            gripper.tactile.read_points(**kwargs)
+            raise AssertionError("invalid tactile request was accepted")
+        except ValueError:
+            pass
+
+    assert bus.sent == []

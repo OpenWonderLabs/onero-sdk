@@ -17,6 +17,10 @@ from .end_effector import EndEffector, Gripper, DexterousHand
 from .grippers import (
     CanGripper, GripperState, OmniPickerGripper, OneroGripper,
 )
+from .tactile import (
+    GripperTactile, TactileCalibrationResult, TactileOnlineStatus,
+    TactilePoint, TactileSample,
+)
 from .trajectory import Recording, Recorder, TrajectoryPlanner, Waypoint, TrajectoryFrame
 from .exceptions import (
     OneroError, OneroConnectionError, OneroHardwareError,
@@ -113,6 +117,9 @@ __all__ = [
     # High-level
     "Arm", "DualArm", "ArmBackend", "ArmState",
     "EndEffector", "Gripper", "DexterousHand",
+    "CanGripper", "GripperState", "OmniPickerGripper", "OneroGripper",
+    "GripperTactile", "TactileCalibrationResult", "TactileOnlineStatus",
+    "TactilePoint", "TactileSample",
     "Recording", "Recorder", "TrajectoryPlanner", "Waypoint", "TrajectoryFrame",
     "OneroError", "OneroConnectionError", "OneroHardwareError", "OneroConfigError",
     "OneroTimeoutError", "OneroSafetyError",

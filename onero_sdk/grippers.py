@@ -15,6 +15,7 @@ from typing import Optional
 
 from .can_bus import CanTransport
 from .end_effector import Gripper
+from .tactile import GripperTactile
 
 
 @dataclass(frozen=True)
@@ -222,6 +223,7 @@ class OneroGripper(CanGripper):
                  model: Optional[str] = None,
                  kp: float = 20.0, kd: float = 1.0,
                  feedback_timeout: float = 0.05,
+                 with_tactile: bool = False,
                  owns_bus: bool = False) -> None:
         super().__init__(bus, owns_bus=owns_bus)
         self.kp = float(kp)
@@ -231,6 +233,11 @@ class OneroGripper(CanGripper):
         if not math.isfinite(self.kd) or not 0.0 <= self.kd <= 5.0:
             raise ValueError("kd must be finite and in [0, 5]")
         self._feedback_timeout = float(feedback_timeout)
+        if not isinstance(with_tactile, bool):
+            raise ValueError("with_tactile must be a bool")
+        self.tactile: GripperTactile | None = (
+            GripperTactile(self) if with_tactile else None
+        )
         self._commanded_position = 0.0
         self._model: Optional[str] = None
         self._open_code: Optional[int] = None
