@@ -4,6 +4,8 @@ English | **[中文](README.md)**
 
 Python SDK for controlling onero A1 robotic arms.
 
+Current version: `0.3.1`. Install it with `pip install onero-sdk==0.3.1`; source code is available on [GitHub](https://github.com/lvwenyi01/onero-sdk).
+
 ## Features
 
 - High-level motion API: `movej`, `movel`, `movep`, `movec`, `servoj`, `servop`
@@ -855,30 +857,36 @@ world origin (centered between arms)
 - `base_position_left/right`: full control over each arm's base [x, y, z] in world (for asymmetric setups)
 - All `frame="world"` coordinates are interpreted identically by both arms — same point means same point
 
-### End Effector (Gripper / Dexterous Hand)
+### End Effector (Onero Gripper)
 
-**What it does**: The SDK includes `OmniPickerGripper` (legacy byte protocol) and `OneroGripper` (self-developed MIT protocol). The user must select the protocol explicitly; there is no automatic detection or fallback. The gripper shares the Arm-owned CAN transport and I/O lock, so SocketCAN and direct Python SLCAN do not open a device twice or race feedback frames.
+**What it does**: A1 uses `OneroGripper`, which implements Onero's DM-compatible MIT CAN protocol. The command CAN ID is `0x08` and the feedback CAN ID is `0x18`. The gripper shares the Arm-owned CAN transport and I/O lock, so SocketCAN and direct Python SLCAN do not open a device twice or race feedback frames.
 
-**When to use**: When a physical gripper shares the A1 CAN channel. Visual model, hardware protocol, TCP, payload, and gravity compensation remain independent.
+**When to use**: Use it when a physical Onero gripper shares the A1 CAN channel. Gripper communication, TCP, payload, and gravity compensation are independent settings and must match the installed hardware.
 
 ```python
-from onero_sdk import Arm, OmniPickerGripper
+from onero_sdk import Arm, OneroGripper
 
-# Explicitly select OmniPicker; use OneroGripper() for MIT hardware.
-# Legacy force defaults to a conservative 0x20/255 rather than maximum force.
-gripper = OmniPickerGripper(can_id=0x08, force=0x20, velocity=0xFF)
+gripper = OneroGripper()
+arm = Arm(
+    "A1R",
+    channel="can0",
+    end_effector=gripper,
+    with_gripper=True,
+)
 
-with Arm("A1R", channel="can0", end_effector=gripper,
-         with_gripper=True) as arm:
-    arm.gripper.open()          # 1.0 = fully open
-    arm.gripper.set_position(0.5)
-    arm.gripper.grasp()         # 0.0 = fully closed
-    print(arm.gripper.state)    # position/velocity/force/status feedback
+try:
+    arm.enable()                    # enables both arm and gripper
+    arm.gripper.open()              # 1.0 = fully open
+    arm.gripper.set_position(0.5)   # half open
+    arm.gripper.grasp()             # 0.0 = fully closed
+    print(arm.gripper.state)
+finally:
+    # Disabling removes holding torque; physically support the arm first.
+    arm.disable()
+    arm.close()
 ```
 
-`close()` and context exit do not send an additional gripper-disable frame; only explicit `arm.disable()` runs the defined disable lifecycle.
-
-See [docs/guide_grippers.md](docs/guide_grippers.md) for protocol selection, side-specific Onero endpoint calibration, lifecycle, and safety details. See `examples/gripper_pick_place.py` for a full pick-and-place workflow.
+The SDK selects measured gripper endpoints from the explicit `A1L` or `A1R` model; it never infers arm side from the CAN channel name. See [docs/guide_grippers.md](docs/guide_grippers.md) for protocol, endpoint calibration, lifecycle, and safety details. See `examples/gripper_pick_place.py` for a full pick-and-place workflow.
 
 ## Hardware Setup
 

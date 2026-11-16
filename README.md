@@ -4,6 +4,8 @@
 
 用于控制 onero A1 机械臂的 Python SDK。
 
+当前版本：`0.3.1`。可通过 `pip install onero-sdk==0.3.1` 安装；源码位于 [GitHub](https://github.com/lvwenyi01/onero-sdk)。
+
 ## 功能特性
 
 - 高级运动 API：`movej`、`movel`、`movep`、`movec`、`servoj`、`servop`
@@ -861,30 +863,36 @@ world 原点 (两臂中间)
 - `base_position_left/right`：完全控制各臂 base 在 world 中的 [x, y, z]（非对称安装时使用）
 - 所有 `frame="world"` 下的坐标，两臂解释完全一致——同一个点就是同一个点
 
-### 末端执行器（夹爪 / 灵巧手）
+### 末端执行器（Onero 夹爪）
 
-**特性说明**：SDK 内置 `OmniPickerGripper`（旧款字节协议）和 `OneroGripper`（自研 MIT 协议）。型号必须由用户显式指定，不自动探测或回退。夹爪与机械臂共享同一个 Arm 所有的 CAN transport 和 I/O 锁，因此 SocketCAN 与直接 Python SLCAN 都不会重复打开设备或争抢反馈帧。
+**特性说明**：A1 使用 `OneroGripper`，采用 Onero 自研、兼容 DM MIT 编码的 CAN 协议。命令 CAN ID 为 `0x08`，反馈 CAN ID 为 `0x18`。夹爪与机械臂共享 `Arm` 所有的 CAN transport 和 I/O 锁，因此 SocketCAN 与直接 Python SLCAN 不会重复打开设备或争抢反馈帧。
 
-**适用场景**：实体夹爪与 A1 共用 CAN 通道时使用。视觉模型、夹爪通信、TCP、payload 和重力补偿互相独立。
+**适用场景**：实体 Onero 夹爪与 A1 共用 CAN 通道时使用。夹爪通信、TCP、payload 和重力补偿互相独立，均须按实际设备配置。
 
 ```python
-from onero_sdk import Arm, OmniPickerGripper
+from onero_sdk import Arm, OneroGripper
 
-# 明确选择 OmniPicker 协议；自研 MIT 夹爪则使用 OneroGripper()。
-# Legacy 默认力矩为 0x20/255，避免默认最大夹持力。
-gripper = OmniPickerGripper(can_id=0x08, force=0x20, velocity=0xFF)
+gripper = OneroGripper()
+arm = Arm(
+    "A1R",
+    channel="can0",
+    end_effector=gripper,
+    with_gripper=True,
+)
 
-with Arm("A1R", channel="can0", end_effector=gripper,
-         with_gripper=True) as arm:
-    arm.gripper.open()          # 1.0 = 全开
-    arm.gripper.set_position(0.5)
-    arm.gripper.grasp()         # 0.0 = 全闭
-    print(arm.gripper.state)    # 位置/速度/力/状态反馈
+try:
+    arm.enable()                    # 同时使能机械臂与夹爪
+    arm.gripper.open()              # 1.0 = 全开
+    arm.gripper.set_position(0.5)   # 半开
+    arm.gripper.grasp()             # 0.0 = 全闭
+    print(arm.gripper.state)
+finally:
+    # 失能会撤销机械臂保持力矩，必须先可靠支撑机械臂。
+    arm.disable()
+    arm.close()
 ```
 
-`close()`/上下文退出不会额外发送夹爪失能帧；只有显式 `arm.disable()` 才执行已定义的失能流程。
-
-完整协议选择、Onero 左右端点校准、生命周期和安全说明参见 [docs/guide_grippers.md](docs/guide_grippers.md)；抓取工作流参见 `examples/gripper_pick_place.py`。
+SDK 会根据明确的 `A1L` 或 `A1R` 型号选择对应的夹爪端点，不根据 CAN 通道名称推断左右。完整协议、端点校准、生命周期和安全说明参见 [docs/guide_grippers.md](docs/guide_grippers.md)；抓取工作流参见 `examples/gripper_pick_place.py`。
 
 ## 硬件配置
 
