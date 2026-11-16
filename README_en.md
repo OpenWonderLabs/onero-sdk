@@ -886,7 +886,7 @@ finally:
     arm.close()
 ```
 
-The SDK selects measured gripper endpoints from the explicit `A1L` or `A1R` model; it never infers arm side from the CAN channel name. See [docs/guide_grippers.md](docs/guide_grippers.md) for protocol, endpoint calibration, lifecycle, and safety details. See `examples/gripper_pick_place.py` for a full pick-and-place workflow.
+The SDK selects measured gripper endpoints from the explicit `A1L` or `A1R` model; it never infers arm side from the CAN channel name. See [docs/guide_grippers.md](docs/guide_grippers.md) for the usage guide. The low-level gripper and parameter protocol is documented in Chinese at [docs/protocol_gripper_can.md](docs/protocol_gripper_can.md). See `examples/gripper_pick_place.py` for a full pick-and-place workflow.
 
 ## Hardware Setup
 

@@ -892,7 +892,7 @@ finally:
     arm.close()
 ```
 
-SDK 会根据明确的 `A1L` 或 `A1R` 型号选择对应的夹爪端点，不根据 CAN 通道名称推断左右。完整协议、端点校准、生命周期和安全说明参见 [docs/guide_grippers.md](docs/guide_grippers.md)；抓取工作流参见 `examples/gripper_pick_place.py`。
+SDK 会根据明确的 `A1L` 或 `A1R` 型号选择对应的夹爪端点，不根据 CAN 通道名称推断左右。使用指南参见 [docs/guide_grippers.md](docs/guide_grippers.md)；夹爪控制和参数读写的底层协议见 [docs/protocol_gripper_can.md](docs/protocol_gripper_can.md)；抓取工作流参见 `examples/gripper_pick_place.py`。
 
 ## 硬件配置
 
