@@ -32,7 +32,7 @@ full = [
 dev = ["pytest>=7.0", "pytest-cov>=4.0"]
 
 [project.urls]
-Repository = "https://github.com/lvwenyi01/onero-sdk"
+Repository = "https://github.com/OpenWonderLabs/onero-sdk"
 
 [tool.setuptools.packages.find]
 include = ["onero_sdk*"]

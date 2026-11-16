@@ -21,7 +21,7 @@ def test_public_repository_url_points_to_current_github_repository():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
 
     assert project["project"]["urls"]["Repository"] == (
-        "https://github.com/lvwenyi01/onero-sdk"
+        "https://github.com/OpenWonderLabs/onero-sdk"
     )
 
 
