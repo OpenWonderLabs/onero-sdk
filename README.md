@@ -4,7 +4,7 @@
 
 用于控制 onero A1 机械臂的 Python SDK。
 
-当前版本：`0.3.1`。可通过 `pip install onero-sdk==0.3.1` 安装；源码位于 [GitHub](https://github.com/OpenWonderLabs/onero-sdk)。
+当前版本：`0.3.2`。可通过 `pip install onero-sdk==0.3.2` 安装；源码位于 [GitHub](https://github.com/OpenWonderLabs/onero-sdk)。
 
 ## 功能特性
 

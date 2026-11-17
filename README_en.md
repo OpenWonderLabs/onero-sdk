@@ -4,7 +4,7 @@ English | **[中文](README.md)**
 
 Python SDK for controlling onero A1 robotic arms.
 
-Current version: `0.3.1`. Install it with `pip install onero-sdk==0.3.1`; source code is available on [GitHub](https://github.com/OpenWonderLabs/onero-sdk).
+Current version: `0.3.2`. Install it with `pip install onero-sdk==0.3.2`; source code is available on [GitHub](https://github.com/OpenWonderLabs/onero-sdk).
 
 ## Features
 

@@ -10,11 +10,11 @@ import onero_sdk
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_release_version_is_0_3_1_everywhere():
+def test_release_version_is_0_3_2_everywhere():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
 
-    assert project["project"]["version"] == "0.3.1"
-    assert onero_sdk.__version__ == "0.3.1"
+    assert project["project"]["version"] == "0.3.2"
+    assert onero_sdk.__version__ == "0.3.2"
 
 
 def test_public_repository_url_points_to_current_github_repository():
@@ -41,4 +41,4 @@ def test_public_gripper_examples_use_onero_gripper():
 def test_readmes_display_release_version():
     for name in ("README.md", "README_en.md"):
         text = (ROOT / name).read_text()
-        assert re.search(r"\b0\.3\.1\b", text), name
+        assert re.search(r"\b0\.3\.2\b", text), name
